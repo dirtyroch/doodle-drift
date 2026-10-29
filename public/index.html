@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16203a">
+<title>Doodle Drift — the scribble-and-guess relay</title>
+<meta name="description" content="Write a prompt, draw it, guess it, watch it drift. A party game for 3–12 friends.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="bg-doodles" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Doodle Drift home">
+    <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M6 44c8-14 16 10 26-4s14 8 24-6" fill="none" stroke="#ffd43b" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 10"/>
+      <g transform="rotate(35 40 22)"><rect x="30" y="8" width="12" height="30" rx="3" fill="#ff6b5b" stroke="#141a2e" stroke-width="3"/><path d="M30 38h12l-6 10z" fill="#fff3d6" stroke="#141a2e" stroke-width="3" stroke-linejoin="round"/><rect x="30" y="8" width="12" height="6" rx="2" fill="#5ad1a7" stroke="#141a2e" stroke-width="3"/></g>
+    </svg>
+    <span class="brand-word">Doodle<span>Drift</span></span>
+  </a>
+  <div class="topbar-right">
+    <span id="room-chip" class="chip hidden"></span>
+    <button id="mute-btn" class="icon-btn" title="Sound on/off" aria-label="Toggle sound">🔊</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen">
+    <div class="hero">
+      <h1 class="hero-title"><span class="w1">Write it.</span> <span class="w2">Draw it.</span> <span class="w3">Watch it drift.</span></h1>
+      <p class="hero-sub">A scribble-and-guess relay for 3–12 friends. Every sketchbook gets passed around until nobody remembers how it started.</p>
+    </div>
+    <div class="card profile-card">
+      <div class="profile-row">
+        <button id="avatar-preview" class="avatar big" title="Shuffle avatar" aria-label="Shuffle avatar"></button>
+        <div class="grow">
+          <label class="lbl" for="name-input">Your doodler name</label>
+          <input id="name-input" class="input" maxlength="16" placeholder="e.g. Captain Squiggle" autocomplete="nickname">
+        </div>
+      </div>
+      <div class="lbl">Pick a buddy</div>
+      <div id="emoji-picker" class="emoji-picker"></div>
+      <div id="color-picker" class="color-picker"></div>
+      <div class="home-actions">
+        <button id="create-btn" class="btn btn-primary btn-xl">✏️ Start a room</button>
+        <div class="or"><span>or join friends</span></div>
+        <form id="join-form" class="join-row">
+          <input id="code-input" class="input code-input" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off" spellcheck="false">
+          <button class="btn btn-mint" type="submit">Join</button>
+        </form>
+      </div>
+      <p id="home-error" class="error" role="alert"></p>
+    </div>
+    <ol class="howto">
+      <li><b>1</b><span>Everyone secretly writes a silly prompt.</span></li>
+      <li><b>2</b><span>Sketchbooks slide to the next player, who draws it.</span></li>
+      <li><b>3</b><span>The next player guesses the doodle. Repeat!</span></li>
+      <li><b>4</b><span>Replay every chain stroke by stroke and cry laughing.</span></li>
+    </ol>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="screen-lobby" class="screen hidden">
+    <div class="lobby-grid">
+      <div class="card">
+        <div class="code-box">
+          <div>
+            <div class="lbl">Room code</div>
+            <div id="lobby-code" class="big-code">----</div>
+          </div>
+          <div class="code-actions">
+            <button id="copy-link" class="btn btn-small btn-yellow">🔗 Copy invite link</button>
+            <button id="share-link" class="btn btn-small btn-ghost hidden">📤 Share</button>
+          </div>
+        </div>
+        <div class="players-head">
+          <h2>Doodlers <span id="player-count" class="muted"></span></h2>
+        </div>
+        <ul id="player-list" class="player-list"></ul>
+      </div>
+      <div class="card settings-card">
+        <h2>House rules</h2>
+        <p id="settings-note" class="muted small"></p>
+        <div class="lbl">Mode</div>
+        <div id="mode-list" class="mode-list"></div>
+        <div class="lbl">Pace</div>
+        <div id="pace-list" class="seg"></div>
+        <label class="toggle">
+          <input type="checkbox" id="wildcards-toggle">
+          <span class="toggle-ui"></span>
+          <span><b>🃏 Wildcards</b><br><small class="muted">Random drawers get a secret challenge card.</small></span>
+        </label>
+        <button id="start-btn" class="btn btn-primary btn-xl full">Start drifting</button>
+        <p id="start-hint" class="muted small center"></p>
+        <p id="lobby-error" class="error" role="alert"></p>
+      </div>
+    </div>
+    <button id="leave-btn" class="btn btn-ghost btn-small leave">← Leave room</button>
+  </section>
+
+  <!-- PLAY -->
+  <section id="screen-play" class="screen hidden">
+    <div class="play-head">
+      <div class="step-pill" id="step-pill">Page 1 / 4</div>
+      <div class="timer" id="timer"><div class="timer-fill" id="timer-fill"></div><span id="timer-text">0:00</span></div>
+      <div class="waiting-mini" id="waiting-mini"></div>
+    </div>
+
+    <!-- write -->
+    <div id="task-write" class="task hidden">
+      <div class="card task-card">
+        <div id="write-prev" class="prev-drawing hidden"><img id="write-prev-img" alt="The drawing you need to describe"></div>
+        <h2 id="write-title" class="task-title"></h2>
+        <form id="write-form" class="write-row">
+          <input id="write-input" class="input input-lg" maxlength="140" autocomplete="off">
+          <button type="button" id="dice-btn" class="icon-btn dice" title="Inspire me">🎲</button>
+        </form>
+        <div id="emoji-keys" class="emoji-keys hidden"></div>
+        <button id="write-submit" class="btn btn-primary btn-xl full">Pass it on →</button>
+      </div>
+    </div>
+
+    <!-- draw -->
+    <div id="task-draw" class="task hidden">
+      <div class="draw-prompt">
+        <span class="muted">Draw this:</span> <b id="draw-prompt-text"></b>
+      </div>
+      <div id="wildcard" class="wildcard hidden"><span>🃏</span><div><small>WILDCARD</small><b id="wildcard-text"></b></div></div>
+      <div class="draw-layout">
+        <div class="canvas-wrap card-flat">
+          <canvas id="draw-canvas" width="800" height="600"></canvas>
+          <div id="brush-cursor" class="brush-cursor"></div>
+        </div>
+        <div class="toolbar">
+          <div class="tool-group tools">
+            <button class="tool active" data-tool="pen" title="Pen (P)">✏️</button>
+            <button class="tool" data-tool="fill" title="Paint bucket (F)">🪣</button>
+            <button class="tool" data-tool="eraser" title="Eraser (E)">🧽</button>
+          </div>
+          <div class="tool-group sizes" id="sizes"></div>
+          <div class="tool-group palette" id="palette"></div>
+          <div class="tool-group actions">
+            <button class="tool" id="undo-btn" title="Undo (Ctrl+Z)">↶</button>
+            <button class="tool" id="redo-btn" title="Redo (Ctrl+Y)">↷</button>
+            <button class="tool" id="clear-btn" title="Clear">🗑️</button>
+          </div>
+        </div>
+      </div>
+      <button id="draw-submit" class="btn btn-primary btn-xl full draw-submit">Done! Pass it on →</button>
+    </div>
+
+    <!-- waiting overlay -->
+    <div id="waiting" class="waiting hidden">
+      <div class="card waiting-card">
+        <div class="paper-plane">📨</div>
+        <h2>Sent down the line!</h2>
+        <p class="muted" id="waiting-text">Waiting for the others…</p>
+        <ul id="waiting-list" class="waiting-list"></ul>
+        <button id="edit-btn" class="btn btn-ghost btn-small">✏️ Wait, let me fix it</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVEAL -->
+  <section id="screen-reveal" class="screen hidden">
+    <div class="reveal-head">
+      <div>
+        <div class="lbl" id="reveal-counter">Sketchbook 1 of 4</div>
+        <h2 id="reveal-title" class="reveal-title"></h2>
+      </div>
+      <div class="reveal-tabs" id="reveal-tabs"></div>
+    </div>
+    <div id="chain" class="chain"></div>
+    <div class="reveal-bar">
+      <div class="reactions" id="reactions"></div>
+      <div class="reveal-controls">
+        <button id="download-btn" class="btn btn-small btn-yellow">⬇️ Save chain</button>
+        <button id="showall-btn" class="btn btn-small btn-ghost host-only">⏩ Show all</button>
+        <button id="next-btn" class="btn btn-primary host-only">Next ▶</button>
+        <button id="again-btn" class="btn btn-mint host-only hidden">🔁 Play again</button>
+        <span id="reveal-wait" class="muted small guest-only">The host is turning the pages…</span>
+      </div>
+    </div>
+    <div id="floaters" class="floaters" aria-hidden="true"></div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast" role="status"></div>
+<div id="curtain" class="curtain hidden"><div class="curtain-text" id="curtain-text"></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/sound.js"></script>
+<script src="/draw.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
