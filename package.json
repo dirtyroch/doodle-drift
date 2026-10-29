@@ -20,7 +20,7 @@
     "puppeteer-core": "^24.43.1"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "private": true
 }

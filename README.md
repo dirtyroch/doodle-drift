@@ -16,6 +16,18 @@ Open the URL, enter a name, pick an avatar, hit **Start a room**, and share the 
 
 To let friends outside your network play, put a tunnel in front of port 4747, e.g. `cloudflared tunnel --url http://localhost:4747` or `npx localtunnel --port 4747`, or deploy to any Node host (Render, Railway, Fly.io). It's a single process with in-memory rooms, so run **one** instance with WebSockets enabled.
 
+## Deploy to Render (free)
+
+The repo includes a `render.yaml` Blueprint. In Render: **New → Blueprint** (or **New → Web Service**) and point it at the repo. Settings if you configure it by hand:
+
+- Runtime: **Node** (Node 20, set via `engines`, `.nvmrc` and `NODE_VERSION`)
+- Build command: `npm install`
+- Start command: `npm start`
+- Health check path: `/healthz`
+- Instance: Free. WebSockets work out of the box. The server reads `PORT` from the environment.
+
+The free tier sleeps after about 15 minutes idle (the first visit takes ~30–60s to wake up) and rooms are in memory, so a redeploy or sleep ends games in progress.
+
 ## What's in the box
 
 - **Lobby:** shareable code/link, nickname plus emoji avatar and color, host crown, host can kick, 3–12 players, host hands off automatically if they leave.

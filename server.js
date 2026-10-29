@@ -34,7 +34,7 @@ const AVATAR_COLORS = ['#ff6b5b','#ffb238','#ffe066','#5ad1a7','#4cc9f0','#7b8cf
 const app = express();
 app.disable('x-powered-by');
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
-app.get('/health', (_req, res) => res.json({ ok: true, rooms: rooms.size }));
+app.get(['/health', '/healthz'], (_req, res) => res.json({ ok: true, rooms: rooms.size }));
 app.get('/r/:code', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const server = http.createServer(app);
@@ -446,6 +446,6 @@ function cleanupMaybe(r) {
 }
 
 if (require.main === module) {
-  server.listen(PORT, () => console.log(`Doodle Drift running on http://localhost:${PORT}`));
+  server.listen(PORT, '0.0.0.0', () => console.log(`Doodle Drift running on http://localhost:${PORT}`));
 }
 module.exports = { server, rooms };
