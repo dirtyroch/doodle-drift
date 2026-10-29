@@ -49,6 +49,11 @@ fs.rmSync(DL, { recursive: true, force: true }); fs.mkdirSync(DL, { recursive: t
   await host.screenshot({ path: `${OUT}/lobby.png` });
   await players[1].screenshot({ path: `${OUT}/lobby-mobile.png` });
   console.log('lobby screenshots saved');
+  // audio: engine unlocked by the clicks, lobby loop playing and actually making sound
+  await sleep(1200);
+  const aud = await host.evaluate(async () => { const lv = []; for (let i = 0; i < 10; i++) { lv.push(Sfx.level()); await new Promise(r => setTimeout(r, 60)); } return { ...Sfx.state(), peak: Math.max(...lv) }; });
+  console.log(`audio in lobby: running=${aud.running} track=${aud.track} level=${aud.peak.toFixed(4)}`);
+  if (!aud.running || aud.track !== 'lobby' || !(aud.peak > 0.0005)) throw new Error('lobby music not playing');
   await host.click('#start-btn');
 
   const prompts = ['A wizard stuck in traffic', 'Grandma winning a rap battle', 'A haunted vending machine', 'Penguin on its first day of school'];
@@ -106,6 +111,15 @@ fs.rmSync(DL, { recursive: true, force: true }); fs.mkdirSync(DL, { recursive: t
         const n = await p.evaluate(() => window.__dd.pad.state.actions.length);
         if (!n) throw new Error(`${p.name} drew nothing (step ${step})`);
         if (i === 0 && step === 1) await host.screenshot({ path: `${OUT}/draw.png` });
+        if (i === 0 && step === 1) {
+          const t1 = await host.evaluate(() => Sfx.state().track);
+          await host.evaluate(() => Sfx.tension(true)); await sleep(900);
+          const t2 = await host.evaluate(() => ({ track: Sfx.state().track, lv: Sfx.level() }));
+          await host.evaluate(() => { Sfx.tick(9); Sfx.tick(3); Sfx.timesUp(); Sfx.tension(false); });
+          const t3 = await host.evaluate(() => Sfx.state().track);
+          console.log(`  music while drawing: ${t1} -> suspense: ${t2.track} (level ${t2.lv.toFixed(4)}) -> back: ${t3}`);
+          if (t1 !== 'play' || t2.track !== 'tense' || t3 !== 'play') throw new Error('suspense music switch failed');
+        }
         if (p.mobile && step === 1) await p.screenshot({ path: `${OUT}/draw-mobile.png` });
         await p.click('#draw-submit');
       }
@@ -124,6 +138,19 @@ fs.rmSync(DL, { recursive: true, force: true }); fs.mkdirSync(DL, { recursive: t
   await players[1].screenshot({ path: `${OUT}/reveal-mobile.png` });
   const shown = await players[3].evaluate(() => document.querySelectorAll('#chain .entry').length);
   console.log('guest sees entries:', shown);
+  const rv = await host.evaluate(() => Sfx.state());
+  console.log(`  music in reveal: ${rv.track}`);
+  if (rv.track !== 'reveal') throw new Error('reveal music not playing');
+  // sound panel: toggles + volume persist
+  await host.click('#mute-btn'); await host.waitForSelector('#audio-panel:not(.hidden)');
+  await host.screenshot({ path: `${OUT}/sound-panel.png` });
+  await host.click('#music-toggle');
+  await host.$eval('#sfx-vol', el => { el.value = 40; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  const saved = await host.evaluate(() => JSON.parse(localStorage.getItem('rad-audio')));
+  console.log('  sound settings saved:', JSON.stringify(saved));
+  if (saved.music !== false || Math.abs(saved.sfxVol - 0.4) > 0.01) throw new Error('audio settings not persisted');
+  await host.click('#music-toggle'); await host.keyboard.press('Escape');
+  if (!(await host.$eval('#audio-panel', el => el.classList.contains('hidden')))) throw new Error('sound panel did not close');
   if (shown !== 4) throw new Error('guest reveal not synced');
 
   // download

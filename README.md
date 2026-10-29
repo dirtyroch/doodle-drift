@@ -40,7 +40,12 @@ The free tier sleeps after about 15 minutes idle (the first visit takes ~30–60
 - **Timers:** per-step countdown. When time's up, whatever you have is auto-submitted, and anything missing is filled with a placeholder so the game never stalls.
 - **Resilience:** refresh or drop mid-game and you rejoin your seat with your in-progress drawing or text restored. If everyone still online is done, offline players are skipped after about 4s instead of waiting out the timer. "Wait, let me fix it" un-submits while others are still working.
 - **Album reveal (twist):** the host steps through each sketchbook page by page, with drawings **replaying stroke by stroke**. Everyone can fire floating emoji reactions. Any chain can be downloaded as one tall PNG. Then hit **Play again** for the same room.
-- Original synthesized sound effects (WebAudio, no audio files) with a mute toggle.
+- **🎵 Original music + sound, all generated live with the Web Audio API (no audio files, nothing licensed):**
+  - Music loops: a chill ukulele loop for home/lobby, an upbeat chiptune party loop while writing/drawing, and a sitcom-style groove for the album reveal. Phases crossfade smoothly.
+  - **Suspense shift:** in the last 10 seconds of a step the music crossfades to a tense version (C minor, faster, pulsing bass, an ostinato that climbs a semitone every two bars, a rising whistle), then eases back when the step ends.
+  - SFX: countdown ticks for the last 10s (higher and louder for the last 5 and last 3), a time's-up buzzer plus a synthesized rooster crow, submit pop + sparkle, join/leave chimes, page-flip whoosh between rounds, game-start fanfare, drumroll + ta-da for every chain in the reveal, reaction pops, and subtle button clicks.
+  - Sound panel (🎵 in the top bar): separate Music and SFX toggles + volume sliders, saved in localStorage. Audio starts on the first tap/keypress (browser autoplay rules), and pauses when the tab is hidden.
+  - `npm run record:audio` (server running) records previews of every loop and the SFX reel to `/workspace/game-screens/audio/`.
 
 ## Tests
 
@@ -59,6 +64,6 @@ public/style.css   Roch-a-Doodle look: midnight + sticker cards
 public/mascot.svg  Standalone mascot ("Jesus loves you" figure; also inlined as an SVG sprite in index.html)
 public/app.js      Client game logic
 public/draw.js     Vector drawing engine (strokes, flood fill, replay)
-public/sound.js    Synthesized SFX
+public/sound.js    Audio engine: synthesized music loops (lookahead step sequencer, crossfades, suspense mode) + SFX
 test/              e2e (socket) + browser (puppeteer) tests
 ```

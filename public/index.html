@@ -81,7 +81,22 @@
   </a>
   <div class="topbar-right">
     <span id="room-chip" class="chip hidden"></span>
-    <button id="mute-btn" class="icon-btn" title="Sound on/off" aria-label="Toggle sound">🔊</button>
+    <div class="audio-ctl">
+      <button id="mute-btn" class="icon-btn" title="Music &amp; sound" aria-label="Music and sound settings" aria-haspopup="true" aria-expanded="false" aria-controls="audio-panel">🎵</button>
+      <div id="audio-panel" class="audio-panel hidden" role="group" aria-label="Music and sound settings">
+        <div class="ap-row">
+          <button id="music-toggle" class="ap-toggle" aria-pressed="true" title="Music on/off" aria-label="Music on/off">🎵</button>
+          <div class="grow"><label class="ap-lbl" for="music-vol">Music <span id="music-state" class="ap-state"></span></label>
+          <input type="range" id="music-vol" class="ap-range" min="0" max="100" step="1"></div>
+        </div>
+        <div class="ap-row">
+          <button id="sfx-toggle" class="ap-toggle" aria-pressed="true" title="Sound effects on/off" aria-label="Sound effects on/off">🔔</button>
+          <div class="grow"><label class="ap-lbl" for="sfx-vol">Sound effects <span id="sfx-state" class="ap-state"></span></label>
+          <input type="range" id="sfx-vol" class="ap-range" min="0" max="100" step="1"></div>
+        </div>
+        <p id="audio-hint" class="ap-hint"></p>
+      </div>
+    </div>
   </div>
 </header>
 

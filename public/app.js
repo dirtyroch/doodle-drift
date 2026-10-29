@@ -41,6 +41,7 @@
   function show(id) {
     $$('.screen').forEach(s => s.classList.toggle('hidden', s.id !== id));
     window.scrollTo({ top: 0 });
+    Sfx.music({ 'screen-play': 'play', 'screen-reveal': 'reveal' }[id] || 'lobby');
   }
   let toastT;
   function toast(msg, ms = 2200) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
@@ -267,6 +268,7 @@
     S.clockSkew = task.serverNow - Date.now();
     show('screen-play');
     if (isNewStep) {
+      Sfx.tension(false);
       if (task.step > 0 && S.lastStepSeen !== task.step) Sfx.step();
       S.lastStepSeen = task.step;
       setupTask(task);
@@ -392,7 +394,7 @@
 
   function startTimer() {
     stopTimer();
-    let lastTick = -1;
+    let lastTick = -1, lowTime = false;
     const loop = () => {
       if (!S.task) return;
       const now = Date.now() + (S.clockSkew || 0);
@@ -403,8 +405,12 @@
       $('#timer-text').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
       $('#timer').classList.toggle('warn', frac < 0.35 && secs > 5);
       $('#timer').classList.toggle('danger', secs <= 5 && left > 0 && S.submittedStep !== S.task.step);
-      if (secs <= 5 && secs > 0 && secs !== lastTick && S.submittedStep !== S.task.step) { lastTick = secs; Sfx.tick(); }
+      if (secs <= 10 && secs > 0 && secs !== lastTick && S.submittedStep !== S.task.step) { lastTick = secs; Sfx.tick(secs); }
+      const low = secs <= 10 && left > 0; if (low !== lowTime) { lowTime = low; Sfx.tension(low); }
       if (left <= 0) {
+        const key = `${S.task.gameId}:${S.task.step}`;
+        if (S.timesUpFor !== key) { S.timesUpFor = key; if (S.task.duration && S.task.deadline - (S.task.serverNow || 0) > 0) Sfx.timesUp(); }
+        Sfx.tension(false);
         if (S.submittedStep !== S.task.step) { if (S.task.type === 'text') submitWrite(true); else submitDraw(true); }
         $('#edit-btn').classList.add('hidden');
         return;
@@ -427,6 +433,7 @@
   socket.on('reveal:pos', ({ book, shown }) => {
     if (!S.reveal) return;
     const changed = book !== S.reveal.book;
+    if (changed) Sfx.chain();
     S.reveal.book = book; S.reveal.shown = shown;
     renderRevealBook(changed);
   });
@@ -510,7 +517,7 @@
     f.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
     f.style.setProperty('--rot', (Math.random() * 60 - 30) + 'deg');
     $('#floaters').appendChild(f); setTimeout(() => f.remove(), 2500);
-    if (from !== S.you) Sfx.pop();
+    Sfx.react();
   });
 
   // download chain as one tall image
@@ -560,8 +567,29 @@
   });
 
   // ---------- misc ----------
-  $('#mute-btn').textContent = Sfx.muted ? '🔇' : '🔊';
-  $('#mute-btn').addEventListener('click', () => { $('#mute-btn').textContent = Sfx.toggle() ? '🔇' : '🔊'; });
+  // sound panel: separate Music and SFX toggles + volume (persisted by Sfx in localStorage)
+  const panel = $('#audio-panel');
+  function renderAudio(st = Sfx.state()) {
+    $('#mute-btn').textContent = (!st.music && !st.sfx) ? '🔇' : (st.music ? '🎵' : '🔊');
+    $('#music-toggle').setAttribute('aria-pressed', String(st.music)); $('#music-toggle').classList.toggle('off', !st.music);
+    $('#sfx-toggle').setAttribute('aria-pressed', String(st.sfx)); $('#sfx-toggle').classList.toggle('off', !st.sfx);
+    $('#music-state').textContent = st.music ? 'on' : 'off'; $('#sfx-state').textContent = st.sfx ? 'on' : 'off';
+    if (document.activeElement !== $('#music-vol')) $('#music-vol').value = Math.round(st.musicVol * 100);
+    if (document.activeElement !== $('#sfx-vol')) $('#sfx-vol').value = Math.round(st.sfxVol * 100);
+    $('#audio-hint').textContent = st.running ? 'All music & sounds are made live in your browser.' : 'Tap anywhere to start the music.';
+  }
+  Sfx.onChange(renderAudio); renderAudio();
+  const setPanel = (open) => { panel.classList.toggle('hidden', !open); $('#mute-btn').setAttribute('aria-expanded', String(open)); if (open) renderAudio(); };
+  $('#mute-btn').addEventListener('click', (e) => { e.stopPropagation(); Sfx.unlock(); setPanel(panel.classList.contains('hidden')); });
+  $('#music-toggle').addEventListener('click', () => Sfx.setMusic(!Sfx.state().music));
+  $('#sfx-toggle').addEventListener('click', () => Sfx.setSfx(!Sfx.state().sfx));
+  $('#music-vol').addEventListener('input', e => Sfx.setMusicVol(e.target.value / 100));
+  $('#sfx-vol').addEventListener('input', e => Sfx.setSfxVol(e.target.value / 100));
+  $('#sfx-vol').addEventListener('change', () => Sfx.pop());
+  document.addEventListener('click', (e) => { if (!panel.classList.contains('hidden') && !e.target.closest('.audio-ctl')) setPanel(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.classList.contains('hidden')) { setPanel(false); $('#mute-btn').focus(); } });
+  // subtle click on any button (skipped when the button already made its own sound)
+  document.addEventListener('click', (e) => { if (e.target.closest('button:not(:disabled)')) Sfx.click(); });
   window.addEventListener('beforeunload', (e) => { if (S.room && S.room.phase === 'playing') { e.preventDefault(); e.returnValue = ''; } });
   renderProfile();
   if (!urlCode && sessionStorage.getItem('dd-room')) sessionStorage.removeItem('dd-room');

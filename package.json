@@ -7,7 +7,8 @@
     "start": "node server.js",
     "start:forever": "./run.sh",
     "test": "node test/e2e.js",
-    "test:browser": "node test/browser.js"
+    "test:browser": "node test/browser.js",
+    "record:audio": "node test/record-audio.js"
   },
   "license": "UNLICENSED",
   "type": "commonjs",
