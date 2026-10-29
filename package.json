@@ -1,7 +1,7 @@
 {
-  "name": "doodle-drift",
+  "name": "roch-a-doodle",
   "version": "0.1.0",
-  "description": "Doodle Drift: a multiplayer write-draw-guess relay party game",
+  "description": "Roch-a-Doodle: write it, draw it, crow about it. A multiplayer write-draw-guess relay party game.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

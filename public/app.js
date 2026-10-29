@@ -196,7 +196,7 @@
     try { await navigator.clipboard.writeText(inviteLink()); toast('Invite link copied! 📋'); }
     catch { prompt('Copy this link:', inviteLink()); }
   });
-  $('#share-link').addEventListener('click', () => navigator.share({ title: 'Doodle Drift', text: `Join my Doodle Drift room ${S.room.code}!`, url: inviteLink() }).catch(() => {}));
+  $('#share-link').addEventListener('click', () => navigator.share({ title: 'Roch-a-Doodle', text: `Join my Roch-a-Doodle room ${S.room.code}!`, url: inviteLink() }).catch(() => {}));
   $('#start-btn').addEventListener('click', () => {
     socket.emit('start', null, (res) => { if (res && res.error) $('#lobby-error').textContent = res.error; else $('#lobby-error').textContent = ''; });
   });
@@ -436,7 +436,7 @@
   function renderRevealBook(full) {
     const R = S.reveal; const book = R.books[R.book]; const owner = pinfo(book.ownerId);
     $('#reveal-counter').textContent = `Sketchbook ${R.book + 1} of ${R.books.length}`;
-    $('#reveal-title').innerHTML = `${avatarHTML(owner.avatar)} ${esc(owner.name)}'s drift`;
+    $('#reveal-title').innerHTML = `${avatarHTML(owner.avatar)} ${esc(owner.name)}'s chain`;
     $('#reveal-tabs').innerHTML = R.books.map((b, i) => { const o = pinfo(b.ownerId); return `<button data-book="${i}" class="${i === R.book ? 'cur' : ''}" title="${esc(o.name)}" ${isHost() ? '' : 'disabled'}>${avatarHTML(o.avatar)}</button>`; }).join('');
     const chain = $('#chain');
     if (full) { S.cancelReplays.forEach(f => f()); S.cancelReplays = []; chain.innerHTML = ''; }
@@ -457,7 +457,7 @@
     div.innerHTML = `${avatarHTML(a.avatar)}<div class="body"><div class="who">${esc(a.name)} ${verb}</div></div>`;
     const body = div.querySelector('.body');
     const bubble = document.createElement('div');
-    bubble.className = `bubble ${e.type}${e.auto && (!e.text || /drifted away|🤷/.test(e.text || '')) && !e.image ? ' auto' : ''}`;
+    bubble.className = `bubble ${e.type}${e.auto && (!e.text || /flew the coop|🤷/.test(e.text || '')) && !e.image ? ' auto' : ''}`;
     if (e.type === 'text') { bubble.textContent = e.text; if (animate) Sfx.pop(); }
     else {
       const cv = document.createElement('canvas'); cv.width = DD.W; cv.height = DD.H; bubble.appendChild(cv);
@@ -519,7 +519,7 @@
     const book = R.books[R.book]; const owner = pinfo(book.ownerId);
     const Wd = 900, pad = 40, imgW = Wd - pad * 2 - 70, imgH = imgW * 3 / 4;
     const loadImg = (src) => new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
-    const imgs = await Promise.all(book.entries.map(e => e.type === 'drawing' ? loadImg(e.image) : null));
+    const [mascot, ...imgs] = await Promise.all([loadImg('/mascot.svg'), ...book.entries.map(e => e.type === 'drawing' ? loadImg(e.image) : null)]);
     const tmp = document.createElement('canvas').getContext('2d');
     tmp.font = '600 30px Fredoka, sans-serif';
     const wrap = (text, maxW) => { const words = String(text).split(' '); const lines = []; let line = ''; for (const w of words) { const t = line ? line + ' ' + w : w; if (tmp.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; } if (line) lines.push(line); return lines; };
@@ -531,8 +531,9 @@
     const H = header + blocks.reduce((s, b) => s + b.h + 26, 0) + footer;
     const c = document.createElement('canvas'); c.width = Wd; c.height = H; const x = c.getContext('2d');
     x.fillStyle = '#16203a'; x.fillRect(0, 0, Wd, H);
-    x.fillStyle = '#ffd43b'; x.font = '700 44px Fredoka, sans-serif'; x.fillText(`${owner.name}'s drift`, pad, 70);
-    x.fillStyle = '#9aa5cc'; x.font = '600 20px Nunito, sans-serif'; x.fillText(`${book.entries.length} pages · Doodle Drift · room ${S.room?.code || ''}`, pad, 104);
+    x.fillStyle = '#ffd43b'; x.font = '700 44px Fredoka, sans-serif'; x.fillText(`${owner.name}'s chain`, pad, 70);
+    if (mascot) x.drawImage(mascot, Wd - pad - 92, 14, 92, 116);
+    x.fillStyle = '#9aa5cc'; x.font = '600 20px Nunito, sans-serif'; x.fillText(`${book.entries.length} pages · Roch-a-Doodle · room ${S.room?.code || ''}`, pad, 104);
     let y = header;
     const rr = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
     blocks.forEach((b, k) => {
@@ -549,10 +550,10 @@
       else { x.fillStyle = '#999'; x.font = 'italic 24px sans-serif'; x.fillText('(blank page)', bx + 20, by + 50); }
       y += b.h + 26;
     });
-    x.fillStyle = '#5ad1a7'; x.font = '700 22px Fredoka, sans-serif'; x.textAlign = 'center'; x.fillText('✏️ made with Doodle Drift', Wd / 2, H - 30);
+    x.fillStyle = '#5ad1a7'; x.font = '700 22px Fredoka, sans-serif'; x.textAlign = 'center'; x.fillText('🐓 made with Roch-a-Doodle · Write it. Draw it. Crow about it.', Wd / 2, H - 30);
     c.toBlob(blob => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `doodle-drift-${owner.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
+      a.download = `roch-a-doodle-${owner.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       toast('Chain saved! 🖼️');
     }, 'image/png');

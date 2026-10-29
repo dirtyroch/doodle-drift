@@ -1,6 +1,8 @@
-# ✏️ Doodle Drift
+# 🐓 Roch-a-Doodle
 
-**Write it. Draw it. Watch it drift.** A multiplayer scribble-and-guess relay for 3–12 friends, played in the browser (phone or desktop).
+<img src="public/mascot.svg" alt="Roch-a-Doodle mascot: a little Jesus figure with a Jesus loves you banner" width="160" align="right">
+
+**Write it. Draw it. Crow about it.** A multiplayer scribble-and-guess relay for 3–12 friends, played in the browser (phone or desktop).
 
 Everyone writes a silly prompt, then the sketchbooks rotate: the next player draws it, the next guesses the drawing, and so on until every book comes home. Then the whole table watches each chain replay, stroke by stroke.
 
@@ -53,7 +55,8 @@ npm run test:browser   # drives 4 headless Chrome players (1 mobile/touch) throu
 ```
 server.js          Express + Socket.IO game server (rooms, rotation, timers, reveal)
 public/index.html  All screens (home, lobby, play, reveal)
-public/style.css   Doodle Drift look: midnight + sticker cards
+public/style.css   Roch-a-Doodle look: midnight + sticker cards
+public/mascot.svg  Standalone mascot ("Jesus loves you" figure; also inlined as an SVG sprite in index.html)
 public/app.js      Client game logic
 public/draw.js     Vector drawing engine (strokes, flood fill, replay)
 public/sound.js    Synthesized SFX

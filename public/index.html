@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#16203a">
-<title>Doodle Drift — the scribble-and-guess relay</title>
-<meta name="description" content="Write a prompt, draw it, guess it, watch it drift. A party game for 3–12 friends.">
+<title>Roch-a-Doodle — write it, draw it, crow about it</title>
+<meta name="description" content="Write it. Draw it. Crow about it. A scribble-and-guess relay party game for 3–12 friends.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,14 +14,70 @@
 </head>
 <body>
 <div id="bg-doodles" aria-hidden="true"></div>
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="mg-skin" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#ffe9d4"/><stop offset=".65" stop-color="#ffd2ad"/><stop offset="1" stop-color="#eeaa80"/></radialGradient>
+    <radialGradient id="mg-hair" cx="35%" cy="25%" r="80%"><stop offset="0" stop-color="#a36e48"/><stop offset=".6" stop-color="#7a4c2e"/><stop offset="1" stop-color="#55331e"/></radialGradient>
+    <radialGradient id="mg-robe" cx="38%" cy="25%" r="85%"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#fbf3e2"/><stop offset="1" stop-color="#e3d2b2"/></radialGradient>
+    <linearGradient id="mg-sash" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a7c"/><stop offset="1" stop-color="#e0473a"/></linearGradient>
+    <radialGradient id="mg-heart" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ff9a8e"/><stop offset="1" stop-color="#e2392f"/></radialGradient>
+    <linearGradient id="mg-halo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset="1" stop-color="#f5b81c"/></linearGradient>
+    <radialGradient id="mg-foot" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#d9a070"/><stop offset="1" stop-color="#9c6438"/></radialGradient>
+  </defs>
+  <symbol id="mascot-figure" viewBox="0 0 200 212">
+    <ellipse cx="100" cy="203" rx="46" ry="7" fill="#000" opacity=".22"/>
+    <!-- halo -->
+    <ellipse cx="100" cy="22" rx="33" ry="9" fill="none" stroke="url(#mg-halo)" stroke-width="7"/>
+    <ellipse cx="88" cy="16" rx="8" ry="2" fill="#fff" opacity=".7"/>
+    <!-- hair back -->
+    <path d="M52 76 Q44 128 66 140 L134 140 Q156 128 148 76 Z" fill="url(#mg-hair)"/>
+    <!-- arms (open, welcoming) -->
+    <g>
+      <rect x="44" y="134" width="40" height="20" rx="10" transform="rotate(28 80 144)" fill="url(#mg-robe)"/>
+      <circle cx="49" cy="126" r="9.5" fill="url(#mg-skin)"/>
+      <rect x="116" y="134" width="40" height="20" rx="10" transform="rotate(-28 120 144)" fill="url(#mg-robe)"/>
+      <circle cx="151" cy="126" r="9.5" fill="url(#mg-skin)"/>
+    </g>
+    <!-- feet -->
+    <ellipse cx="87" cy="197" rx="12" ry="7.5" fill="url(#mg-foot)"/>
+    <ellipse cx="113" cy="197" rx="12" ry="7.5" fill="url(#mg-foot)"/>
+    <!-- robe -->
+    <path d="M70 196 Q64 154 78 130 Q100 120 122 130 Q136 154 130 196 Q100 203 70 196 Z" fill="url(#mg-robe)"/>
+    <path d="M80 128 L94 124 L128 178 Q126 186 120 188 Z" fill="url(#mg-sash)"/>
+    <path d="M100 172 C84 162 85 148 93.5 148 C97.5 148 100 152 100 152 C100 152 102.5 148 106.5 148 C115 148 116 162 100 172 Z" fill="url(#mg-heart)"/>
+    <ellipse cx="94" cy="153" rx="3" ry="2" fill="#fff" opacity=".75"/>
+    <ellipse cx="82" cy="150" rx="4" ry="12" fill="#fff" opacity=".55"/>
+    <!-- head -->
+    <circle cx="100" cy="80" r="50" fill="url(#mg-skin)"/>
+    <!-- beard -->
+    <path d="M58 92 Q62 134 100 136 Q138 134 142 92 Q136 120 112 121 Q100 115 88 121 Q64 120 58 92 Z" fill="url(#mg-hair)"/>
+    <!-- bangs, centre part -->
+    <path d="M50 84 Q46 34 100 30 Q154 34 150 84 Q142 60 122 52 Q108 50 100 40 Q92 50 78 52 Q58 60 50 84 Z" fill="url(#mg-hair)"/>
+    <ellipse cx="76" cy="44" rx="12" ry="4.5" transform="rotate(-22 76 44)" fill="#fff" opacity=".3"/>
+    <!-- face -->
+    <circle cx="82" cy="88" r="5.6" fill="#2b1c14"/><circle cx="83.8" cy="86" r="1.8" fill="#fff"/>
+    <circle cx="118" cy="88" r="5.6" fill="#2b1c14"/><circle cx="119.8" cy="86" r="1.8" fill="#fff"/>
+    <ellipse cx="70" cy="101" rx="8.5" ry="5" fill="#ff7f86" opacity=".55"/>
+    <ellipse cx="130" cy="101" rx="8.5" ry="5" fill="#ff7f86" opacity=".55"/>
+    <path d="M92 104 Q100 111 108 104" fill="none" stroke="#5b3520" stroke-width="3.2" stroke-linecap="round"/>
+    <!-- glossy rubber highlights -->
+    <ellipse cx="74" cy="66" rx="11" ry="6" transform="rotate(-30 74 66)" fill="#fff" opacity=".5"/>
+    <circle cx="46" cy="122" r="2.6" fill="#fff" opacity=".6"/><circle cx="148" cy="122" r="2.6" fill="#fff" opacity=".6"/>
+  </symbol>
+  <symbol id="mascot-banner" viewBox="0 0 200 40">
+    <path d="M14 10 L36 8 L36 34 L14 32 L22 21 Z" fill="#d9493b"/>
+    <path d="M186 10 L164 8 L164 34 L186 32 L178 21 Z" fill="#d9493b"/>
+    <rect x="30" y="4" width="140" height="28" rx="9" fill="url(#mg-sash)"/>
+    <rect x="38" y="7" width="70" height="5" rx="2.5" fill="#fff" opacity=".35"/>
+    <text x="100" y="24.5" text-anchor="middle" font-family="Fredoka, Nunito, sans-serif" font-weight="700" font-size="15.5" fill="#fff8e8">Jesus loves you ♥</text>
+  </symbol>
+</svg>
+
 
 <header class="topbar">
-  <a class="brand" href="/" aria-label="Doodle Drift home">
-    <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M6 44c8-14 16 10 26-4s14 8 24-6" fill="none" stroke="#ffd43b" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 10"/>
-      <g transform="rotate(35 40 22)"><rect x="30" y="8" width="12" height="30" rx="3" fill="#ff6b5b" stroke="#141a2e" stroke-width="3"/><path d="M30 38h12l-6 10z" fill="#fff3d6" stroke="#141a2e" stroke-width="3" stroke-linejoin="round"/><rect x="30" y="8" width="12" height="6" rx="2" fill="#5ad1a7" stroke="#141a2e" stroke-width="3"/></g>
-    </svg>
-    <span class="brand-word">Doodle<span>Drift</span></span>
+  <a class="brand" href="/" aria-label="Roch-a-Doodle home">
+    <svg class="brand-mark" viewBox="0 0 200 212" aria-hidden="true"><use href="#mascot-figure"/></svg>
+    <span class="brand-word">Roch-a-<span>Doodle</span></span>
   </a>
   <div class="topbar-right">
     <span id="room-chip" class="chip hidden"></span>
@@ -34,8 +90,14 @@
   <!-- HOME -->
   <section id="screen-home" class="screen">
     <div class="hero">
-      <h1 class="hero-title"><span class="w1">Write it.</span> <span class="w2">Draw it.</span> <span class="w3">Watch it drift.</span></h1>
-      <p class="hero-sub">A scribble-and-guess relay for 3–12 friends. Every sketchbook gets passed around until nobody remembers how it started.</p>
+      <figure class="mascot" aria-label="A cheerful little Jesus figure with open arms, holding a banner that says Jesus loves you">
+        <svg class="mascot-fig" viewBox="0 0 200 212" aria-hidden="true"><use href="#mascot-figure"/></svg>
+        <svg class="mascot-banner" viewBox="0 0 200 40" aria-hidden="true"><use href="#mascot-banner"/></svg>
+      </figure>
+      <div class="hero-text">
+        <h1 class="hero-title"><span class="w1">Write it.</span> <span class="w2">Draw it.</span> <span class="w3">Crow about it.</span></h1>
+        <p class="hero-sub">Rise and scribble! A write-draw-guess relay for 3–12 friends. Every sketchbook gets passed down the line until nobody remembers how it started.</p>
+      </div>
     </div>
     <div class="card profile-card">
       <div class="profile-row">
@@ -82,6 +144,7 @@
         </div>
         <div class="players-head">
           <h2>Doodlers <span id="player-count" class="muted"></span></h2>
+          <div class="lobby-mascot" aria-hidden="true"><span class="lobby-bubble">Welcome, friends!</span><svg viewBox="0 0 200 212"><use href="#mascot-figure"/></svg></div>
         </div>
         <ul id="player-list" class="player-list"></ul>
       </div>
@@ -97,7 +160,7 @@
           <span class="toggle-ui"></span>
           <span><b>🃏 Wildcards</b><br><small class="muted">Random drawers get a secret challenge card.</small></span>
         </label>
-        <button id="start-btn" class="btn btn-primary btn-xl full">Start drifting</button>
+        <button id="start-btn" class="btn btn-primary btn-xl full">🐓 Rise &amp; scribble!</button>
         <p id="start-hint" class="muted small center"></p>
         <p id="lobby-error" class="error" role="alert"></p>
       </div>

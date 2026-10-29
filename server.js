@@ -169,7 +169,7 @@ function nextStep(room) {
 }
 
 function placeholderFor(room, type, playerId) {
-  if (type === 'text') return { type: 'text', text: room.settings.mode === 'emoji' ? '🤷' : '…(drifted away)…', authorId: playerId, auto: true };
+  if (type === 'text') return { type: 'text', text: room.settings.mode === 'emoji' ? '🤷' : '…(flew the coop)…', authorId: playerId, auto: true };
   return { type: 'drawing', image: null, strokes: [], authorId: playerId, auto: true };
 }
 
@@ -446,6 +446,6 @@ function cleanupMaybe(r) {
 }
 
 if (require.main === module) {
-  server.listen(PORT, '0.0.0.0', () => console.log(`Doodle Drift running on http://localhost:${PORT}`));
+  server.listen(PORT, '0.0.0.0', () => console.log(`Roch-a-Doodle running on http://localhost:${PORT}`));
 }
 module.exports = { server, rooms };
