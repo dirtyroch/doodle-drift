@@ -24,10 +24,18 @@ window.Sfx = (() => {
   let lastSfx = -1;
   const MUSIC_SCALE = 0.7; // music sits well under the sfx
 
+  // Resume a context that isn't running. Safari also has an 'interrupted' state (after a phone call,
+  // Siri, the lock screen or switching apps), so treat anything but 'running' as needing a resume.
+  function wake() {
+    if (!ctx || ctx.state === 'running' || ctx.state === 'closed' || document.hidden) return;
+    try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch { /* ignore */ }
+  }
   function ac() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return ctx; }
+    if (ctx) { wake(); return ctx; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-    try { ctx = new AC({ latencyHint: 'interactive' }); } catch { ctx = null; return null; }
+    try { ctx = new AC({ latencyHint: 'interactive' }); } catch { try { ctx = new AC(); } catch { ctx = null; return null; } }
+    // when the context (re)starts, make sure the wanted track is actually playing and the UI knows
+    ctx.onstatechange = () => { if (ctx.state === 'running') syncTrack(); emit(); };
     master = ctx.createDynamicsCompressor();
     master.threshold.value = -14; master.knee.value = 10; master.ratio.value = 4; master.attack.value = 0.004; master.release.value = 0.2;
     master.connect(ctx.destination);
@@ -38,7 +46,7 @@ window.Sfx = (() => {
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
     applyMusicVol(0.8);
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    wake();
     startScheduler();
     syncTrack();
     emit();
@@ -328,7 +336,7 @@ window.Sfx = (() => {
     get muted() { return !settings.sfx && !settings.music; },
     state() { return { ...settings, running: !!ctx && ctx.state === 'running', track: currentName(), voices: voices.length }; },
     onChange(fn) { listeners.add(fn); },
-    unlock() { ac(); },
+    unlock() { onGesture(); },
     _debug: { ctx: () => ctx, master: () => master },
     level() { // RMS of the final mix, for tests/visual meters
       if (!meter) return 0; const a = new Float32Array(meter.fftSize); meter.getFloatTimeDomainData(a);
@@ -388,10 +396,57 @@ window.Sfx = (() => {
     scribble() { if (!settings.sfx || !ctx) return; tone(180 + Math.random() * 80, 0.05, { type: 'sawtooth', vol: 0.012 }); },
   };
 
-  // browsers need a user gesture before audio may start: unlock on the first one
-  const first = () => { ac(); window.removeEventListener('pointerdown', first, true); window.removeEventListener('keydown', first, true); };
-  window.addEventListener('pointerdown', first, true);
-  window.addEventListener('keydown', first, true);
-  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend().catch(() => {}); else ctx.resume().catch(() => {}); });
+  // ---------- unlocking (autoplay rules + iOS quirks) ----------
+  // iOS routes Web Audio through the "ambient" audio session, so the ringer/silent switch mutes it
+  // completely (music AND sfx). Asking for the "playback" session (Safari 16.4+) and keeping a
+  // silent <audio> element playing (older iOS) moves the page to the media channel, which ignores
+  // the switch, the same way YouTube/Spotify web do.
+  function setSession() { try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch { /* ignore */ } }
+  let silentEl = null;
+  function silentWavURL() { // 0.5 s of 8 kHz mono silence, built here so there is no extra file
+    const n = 4000, b = new ArrayBuffer(44 + n), d = new DataView(b), w = (o, str) => { for (let i = 0; i < str.length; i++) d.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, 'RIFF'); d.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+    d.setUint32(24, 8000, true); d.setUint32(28, 8000, true); d.setUint16(32, 1, true); d.setUint16(34, 8, true); w(36, 'data'); d.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) d.setUint8(44 + i, 128);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  }
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function keepSilentTrack() {
+    if (!isIOS || document.hidden || !(settings.music || settings.sfx)) return;
+    try {
+      if (!silentEl) {
+        silentEl = document.createElement('audio');
+        silentEl.setAttribute('playsinline', ''); silentEl.setAttribute('webkit-playsinline', ''); silentEl.setAttribute('x-webkit-airplay', 'deny');
+        silentEl.preload = 'auto'; silentEl.loop = true; silentEl.src = silentWavURL();
+      }
+      if (silentEl.paused) { const p = silentEl.play(); if (p && p.catch) p.catch(() => {}); }
+    } catch { /* ignore */ }
+  }
+  // a zero-length buffer started inside the gesture fully "unlocks" older WebKit
+  let primed = false;
+  function prime() {
+    if (primed || !ctx) return;
+    try { const b = ctx.createBuffer(1, 1, 22050), s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0); primed = true; } catch { /* ignore */ }
+  }
+  // Every user gesture (not just the first) re-unlocks: on phones the first touch is often a
+  // pointerdown/touchstart, which does NOT count as a gesture for audio, and after switching apps
+  // (e.g. to text someone the room link) iOS leaves the context suspended/interrupted until the
+  // next real gesture. Cheap when everything is already running.
+  function onGesture() {
+    setSession();
+    ac(); prime(); keepSilentTrack();
+    if (ctx && ctx.state === 'running') { syncTrack(); }
+  }
+  ['pointerdown', 'pointerup', 'touchend', 'mousedown', 'click', 'keydown'].forEach(ev => window.addEventListener(ev, onGesture, { capture: true, passive: true }));
+  setSession();
+  function onVisible() {
+    if (document.hidden) {
+      if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
+      if (silentEl && !silentEl.paused) { try { silentEl.pause(); } catch { /* ignore */ } }
+    } else { wake(); keepSilentTrack(); }
+  }
+  document.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('pageshow', () => { if (!document.hidden) { wake(); keepSilentTrack(); } });
+  window.addEventListener('focus', () => wake());
   return api;
 })();

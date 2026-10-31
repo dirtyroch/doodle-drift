@@ -282,3 +282,8 @@ body.is-host .guest-only{display:none!important}
 .ap-state{font-family:var(--font-body);font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-left:4px}
 .ap-range{width:100%;accent-color:var(--coral);height:22px;cursor:pointer}
 .ap-hint{margin:6px 0 0;font-size:.78rem;color:var(--muted);text-align:center}
+
+/* nudge: sound is on but the browser is still waiting for a tap to start it */
+#mute-btn.needs-tap { animation: needs-tap 1.6s ease-in-out infinite; }
+@keyframes needs-tap { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14) rotate(-6deg); } }
+@media (prefers-reduced-motion: reduce) { #mute-btn.needs-tap { animation: none; outline: 3px dashed currentColor; } }

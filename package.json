@@ -8,7 +8,8 @@
     "start:forever": "./run.sh",
     "test": "node test/e2e.js",
     "test:browser": "node test/browser.js",
-    "record:audio": "node test/record-audio.js"
+    "record:audio": "node test/record-audio.js",
+    "test:audio": "node test/audio-unlock.js"
   },
   "license": "UNLICENSED",
   "type": "commonjs",
